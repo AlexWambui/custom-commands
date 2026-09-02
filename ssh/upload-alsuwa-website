@@ -1,0 +1,3 @@
+#!/bin/bash
+
+npm run build && scp -P 1980 -i ~/.ssh/alsuwa -r ./dist alsuwaco@217.20.124.84:/home2/alsuwaco/public_html

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ssh -p 1980 -i ~/.ssh/alsuwa alsuwaco@217.20.124.84

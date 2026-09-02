@@ -1,0 +1,18 @@
+#!/bin/bash
+
+echo -e "Starting ssh agent...\n"
+
+# Start ssh-agent
+eval "$(ssh-agent -s)" || { echo "Failed to start ssh-agent"; exit 1; }
+
+echo -e "\nssh-agent started\n"
+
+echo -e "Adding wambui ssh key\n"
+key=~/.ssh/alex
+
+if ssh-add "$key"; then
+    echo -e "ssh key added: $key\n"
+else
+    echo -e "Failed to add ssh key: $key\n"
+    exit 1
+fi

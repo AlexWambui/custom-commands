@@ -1,0 +1,21 @@
+#!/bin/bash
+
+echo -e "Starting ssh agent...\n"
+
+# Start ssh-agent and capture its output
+eval "$(ssh-agent -s)" || { echo "Failed to start ssh-agent"; return 1; }
+
+echo -e "\nssh-agent started\n"
+
+echo -e "Adding aaqil ssh key\n"
+
+key=~/.ssh/alex
+
+if ssh-add "$key"; then
+    echo -e "ssh key added: $key\n"
+else
+    echo -e "Failed to add ssh key: $key\n"
+    exit 1
+fi
+
+echo "Aaqil ssh key added successfully."

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+target_file="bootstrap/providers.php"
+template_file="/c/Aaqil/Development/webapp-template/bootstrap/providers.php"
+
+if [ ! -f "$target_file" ]; then
+    echo -e "\033[1;31m✗ Error: bootstrap/providers.php not found. Are you in a Laravel project?\033[0m"
+    exit 1
+fi
+
+if [ ! -f "$template_file" ]; then
+    echo -e "\033[1;31m✗ Error: Template file not found at $template_file\033[0m"
+    exit 1
+fi
+
+if grep -q "Modules\\\\Support\\\\Providers\\\\SupportServiceProvider::class" "$target_file"; then
+    echo -e "\033[1;33m⚠ Support provider already exists in $target_file\033[0m"
+    read -p "Do you want to continue anyway? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "\033[1;32mOperation cancelled.\033[0m"
+        exit 0
+    fi
+fi
+
+# Copy the template
+cp "$template_file" "$target_file"
+echo -e "\033[1;32m✓ Template copied successfully\033[0m"
+
+# Add the support provider with proper escaping
+# Using sed with different delimiter to handle backslashes
+sed -i '$i \    \\Modules\\Support\\Providers\\SupportServiceProvider::class,' "$target_file"
+
+echo -e "\033[1;32m✓ Support provider added successfully!\033[0m"
+echo -e "\n\033[1;33mUpdated $target_file contents:\033[0m"
+echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+cat "$target_file"
+echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"

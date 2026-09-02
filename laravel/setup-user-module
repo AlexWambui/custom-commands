@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# Colors
+RED='\033[1;31m'
+GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[1;36m'
+NC='\033[0m'
+
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}  Setting up User Module (New Project)${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
+
+# Check if we're in a Laravel project
+if [ ! -f "artisan" ]; then
+    echo -e "${RED}✗ Error: Not in a Laravel project root.${NC}"
+    exit 1
+fi
+
+# Step 1: Delete default user migration
+echo -e "${YELLOW}Step 1: Removing default user migration...${NC}"
+MIGRATION="database/migrations/0001_01_01_000000_create_users_table.php"
+if [ -f "$MIGRATION" ]; then
+    rm -f "$MIGRATION"
+    echo -e "${GREEN}✓ Deleted default migration${NC}"
+else
+    echo -e "${YELLOW}⚠ Default migration not found (already removed)${NC}"
+fi
+
+# Step 2: Replace User model (ALWAYS overwrite with latest from webapp-template)
+echo -e "\n${YELLOW}Step 2: Replacing User model with latest version...${NC}"
+SOURCE_MODEL="/c/Aaqil/Development/webapp-template/app/Models/User.php"
+TARGET_MODEL="app/Models/User.php"
+
+if [ ! -f "$SOURCE_MODEL" ]; then
+    echo -e "${RED}✗ Source User model not found at $SOURCE_MODEL${NC}"
+    exit 1
+fi
+
+# Directly copy without backup
+cp "$SOURCE_MODEL" "$TARGET_MODEL"
+echo -e "${GREEN}✓ User model replaced with latest version${NC}"
+
+# Step 3: Update DatabaseSeeder
+echo -e "\n${YELLOW}Step 3: Updating DatabaseSeeder...${NC}"
+SEEDER_FILE="database/seeders/DatabaseSeeder.php"
+
+if [ -f "$SEEDER_FILE" ]; then
+    # Create the new seeder content
+    cat > "$SEEDER_FILE" << 'EOF'
+<?php
+
+namespace Database\Seeders;
+
+// use App\Models\User;
+// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Modules\User\Database\Seeders\UserSeeder;
+
+class DatabaseSeeder extends Seeder
+{
+    // use WithoutModelEvents;
+
+    /**
+     * Seed the application's database.
+     */
+    public function run(): void
+    {
+        // User::factory(10)->create();
+
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
+
+        $this->call(UserSeeder::class);
+    }
+}
+EOF
+    echo -e "${GREEN}✓ DatabaseSeeder updated${NC}"
+else
+    echo -e "${RED}✗ DatabaseSeeder not found at $SEEDER_FILE${NC}"
+    exit 1
+fi
+
+# Step 4: Copy User module from webapp-template
+echo -e "\n${YELLOW}Step 4: Copying User module...${NC}"
+SOURCE_MODULE="/c/Aaqil/Development/webapp-template/modules/User"
+TARGET_MODULE="modules/User"
+
+if [ ! -d "$SOURCE_MODULE" ]; then
+    echo -e "${RED}✗ Source User module not found at $SOURCE_MODULE${NC}"
+    exit 1
+fi
+
+# Create modules folder if it doesn't exist
+if [ ! -d "modules" ]; then
+    mkdir -p "modules"
+    echo -e "${YELLOW}✓ modules folder created${NC}"
+fi
+
+# Remove existing User module if present (to ensure clean copy)
+if [ -d "$TARGET_MODULE" ]; then
+    echo -e "${YELLOW}⚠ User module already exists, removing...${NC}"
+    rm -rf "$TARGET_MODULE"
+fi
+
+cp -r "$SOURCE_MODULE" "$TARGET_MODULE"
+echo -e "${GREEN}✓ User module copied${NC}"
+
+# Step 5: Register User module in Support Service Provider
+echo -e "\n${YELLOW}Step 5: Registering User module in Support Service Provider...${NC}"
+SUPPORT_PROVIDER="modules/Support/Providers/SupportServiceProvider.php"
+
+if [ ! -f "$SUPPORT_PROVIDER" ]; then
+    echo -e "${RED}✗ SupportServiceProvider not found at $SUPPORT_PROVIDER${NC}"
+    echo -e "${YELLOW}  Make sure you've run: copy-support-module first${NC}"
+    exit 1
+fi
+
+# Check if User module is already registered
+if grep -q "UserServiceProvider" "$SUPPORT_PROVIDER"; then
+    echo -e "${YELLOW}⚠ User module already registered${NC}"
+else
+    # Insert the UserServiceProvider registration in the register method
+    sed -i '/public function register(): void/i \    {\n        $this->app->register(\\Modules\\User\\Providers\\UserServiceProvider::class);\n    }' "$SUPPORT_PROVIDER"
+    echo -e "${GREEN}✓ User module registered in SupportServiceProvider${NC}"
+fi
+
+echo -e "\n${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}✅ User module setup complete!${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+echo -e "\n${YELLOW}Next steps:${NC}"
+echo -e "  1. Run migrations: ${GREEN}php artisan migrate${NC}"
+echo -e "  2. Run seeders: ${GREEN}php artisan db:seed${NC}"
+echo -e "  3. Check modules/User for the module structure"
