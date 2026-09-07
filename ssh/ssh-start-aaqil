@@ -9,7 +9,7 @@ echo -e "\nssh-agent started\n"
 
 echo -e "Adding aaqil ssh key\n"
 
-key=~/.ssh/alex
+key=~/.ssh/aaqil
 
 if ssh-add "$key"; then
     echo -e "ssh key added: $key\n"
